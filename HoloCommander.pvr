@@ -3,7 +3,7 @@
   <Objects>
     <Object base_name="Root" name_space="__global__" name_suffix="0" persistency="666" pickable="0" type="Object" visible="1">
       <Object ambient="0.3 0.3 0.3 1" base_name="light" beacon="Headlight_beacon" diffuse="1 1 1 1" lightType="point" name_space="__global__" name_suffix="0" on="1" persistency="666" photometricMap="" pickable="0" shadow="0" shadowColor="0.1 0.1 0.1 1" shadowMapRes="2048" specular="0.1 0.1 0.1 1" type="Light" visible="1">
-        <Object accept_root="1" aspect="1" at="0 0 0" at_dir="0" base_name="Default" far="512" fov="1.0472" from="5.68538 31.3465 30.7114" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0 1 0" visible="1">
+        <Object accept_root="1" aspect="1" at="0.212644 0.508234 1" at_dir="0" base_name="Default" far="512" fov="1.0472" from="-4.6116 2.01119 2.00014" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0.055748 0.680535 -0.730592" visible="1">
           <Object at="0 0 -1" at_dir="0" base_name="Headlight_beacon" from="0 0 0" light="light" name_space="__global__" name_suffix="0" persistency="666" pickable="0" scale="1 1 1" type="LightBeacon" up="0 1 0" visible="1">
             <constraint persistency="666"/>
           </Object>
@@ -14,6 +14,130 @@
   </Objects>
   <Rendering deferred_rendering="0" frustum_culling="1" fxaa="0" hmdd="0" marker="0" occlusion_culling="0" persistency="666" ssao="0" ssao_kernel="4" ssao_noise="4" ssao_radius="0.02" two_sided="1"/>
   <Scripts persistency="666">
+    <Script base_name="Press" group="Interaction" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+	
+	from math import sqrt
+	
+	maxFingerDist = 0.01
+	
+	key = dev.getKey()
+	beacon = dev.getBeacon()
+	x = beacon.getFrom()[0] * 100
+	y = beacon.getFrom()[1] * 100
+	
+	if len(VR.activeTouch) &lt;= key:
+		VR.activeTouch.append(True)
+	else:
+		VR.activeTouch[key] = True
+		
+	for i in range(len(VR.activeTouch)):
+		if i == key:
+			continue
+			
+		if VR.activeTouch[i]:
+			otherX = dev.getBeacon(i).getFrom()[0] * 100
+			otherY = dev.getBeacon(i).getFrom()[1] * 100
+			
+			a = (x - otherX)**2
+			b = (y - otherY)**2
+			c = sqrt(a + b)
+			
+			if c &lt; maxFingerDist:
+				VR.activeMov = (dev, i, key)
+				VR.activeMovPos = [otherX, otherY]
+				
+				return
+		
+	if dev.getName() == 'mouse' and VR.mouseMov:
+		VR.activeMov = (dev, key, "Keyboard")
+		VR.activeMovPos = [x, y]
+				
+	
+		 
+	
+	'''
+	beacon = dev.getBeacon()
+	
+	if dev.intersect():
+		target = dev.getIntersected()
+		
+		parent = target.getParent()
+		VR.movement[dev] = (target, parent)
+		
+		beacon.addChild(target) '''
+</core>
+      <trig type="on_device" dev="mouse" state="Pressed" param="" key="0" base_name="trigger" name_space="__global__" name_suffix="3" persistency="666"/>
+      <trig type="on_device" dev="multitouch" state="Pressed" param="" key="-1" base_name="trigger" name_space="__global__" name_suffix="5" persistency="666"/>
+    </Script>
+    <Script base_name="Release" group="Interaction" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+	
+	key = dev.getKey()
+	
+	VR.activeTouch[key] = False
+	
+	VR.mouseMov = False
+	
+	if key in VR.activeMov:
+		VR.activeMov = (None, None, None)
+	
+	'''
+	print VR.movement[dev]
+	
+	if VR.movement[dev] is not None:
+		target = VR.movement[dev][0]
+		parent = VR.movement[dev][1]
+		
+		parent.addChild(target)'''
+</core>
+      <trig type="on_device" dev="mouse" state="Released" param="" key="0" base_name="trigger" name_space="__global__" name_suffix="4" persistency="666"/>
+      <trig type="on_device" dev="multitouch" state="Released" param="" key="-1" base_name="trigger" name_space="__global__" name_suffix="6" persistency="666"/>
+    </Script>
+    <Script base_name="TouchUpdate" group="Interaction" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+	
+	if None in VR.activeMov:
+		return
+		
+	dev = VR.activeMov[0]
+	key = VR.activeMov[1]
+	
+	x = dev.getBeacon(key).getFrom()[0] * 100
+	y = dev.getBeacon(key).getFrom()[1] * 100
+	
+	oldX, oldY = VR.activeMovPos[0:2]
+	
+	distX = x - oldX
+	distY = y - oldY
+	
+	
+	
+	cam = VR.find("Default")
+	
+	camPos = cam.getWorldFrom()
+	
+	camDir =  cam.getWorldDir()
+	cam.setWorldDir(camDir)
+	
+	# multiplier to scale movement with camera height
+	movScaling = 0.1 * camPos[1]
+	
+	changeX = movScaling * (camDir[0] * distY + camDir[1] * distX)
+	changeZ = movScaling * -(camDir[0] * distX + camDir[1] * distY)
+	
+	#print "X:", changeX
+	#print "Z:", changeZ
+	
+	cam.setWorldFrom([camPos[0] + changeX, camPos[1], camPos[2] + changeZ])
+	
+	VR.activeMovPos = [x, y]
+</core>
+      <trig type="on_timeout" dev="" state="Pressed" param="0" key="0" base_name="trigger" name_space="__global__" name_suffix="7" persistency="666"/>
+    </Script>
     <Script base_name="init" group="no group" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
       <core>
 	import VR
@@ -23,19 +147,88 @@
 
 	VR.assets = {}
 	
-	ground = VR.Geometry("Ground", "scene")
+	ground = VR.Transform("Ground", "scene")
 	VR.assets["ground"] = ground
 	
-	ground.setPrimitive("Plane 40 40 1 1 1")
-	ground.setPose(VR.Pose([0,0,0],[0,1,0],[1,0,0]))
+	ground.setPose(VR.Pose([0,0,0],[0,-1,0],[1,0,0]))
 	
 	groundMat = VR.Material("Ground Color")
 	groundMat.setSpecular([0.33,0.99,0])
 	groundMat.setDiffuse([0.4,0.8,0.1])
-	groundMat.setAmbient([0.01, 0.03, 0.01])
-	ground.setMaterial(groundMat)
+	groundMat.setAmbient([0.2, 0.4, 0.05])
+	#ground.setMaterial(groundMat)
+	
+	terrain = [None] * 100
+	for i in range(len(terrain)):
+		terrain[i] = VR.Geometry("Terrain_" + str(i))
+		terrain[i].setPrimitive("Plane 4 4 1 1 1")
+		terrain[i].setPose(VR.Pose(
+			[-18 + 4 * int(i / 10),-18 + 4*(i%10),0],
+			[0,0,1],
+			[0,1,0]))
+		terrain[i].setMaterial(groundMat)
+		ground.addChild(terrain[i])
+	
+	#ground.setPrimitive("Plane 40 40 1 1 1")
+	#ground.setPose(VR.Pose([0,0,0],[0,-1,0],[1,0,0]))
+	
+	
+	
+	
+	VR.activeTouch = []
+	VR.activeMov = (None, None, None)
+	VR.mouseMov = False
+	VR.activeMovPos = []
 </core>
       <trig type="on_scene_load" dev="" state="Pressed" param="" key="0" base_name="trigger" name_space="__global__" name_suffix="0" persistency="666"/>
+    </Script>
+    <Script base_name="initTank" group="no group" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+	
+	if 'tank' in VR.assets: 
+		VR.assets['tank'].destroy()
+		
+	
+	parent = VR.assets["ground"]
+	
+	body = VR.Geometry("Tank")
+	VR.assets['tank'] = body
+	
+	body.setPrimitive("Box 4 2.5 0.8 1 1 1")
+	body.setPosition([0, 0, 0.6])
+	
+	for i in range(4):
+		wheel = VR.Geometry("wheel_" + str(i))
+		wheel.setPrimitive("Cylinder 0.5 0.4 16 1 1 1")
+		pose = VR.Pose()
+		pose.setPos([(-1)**i * 1.5, -1.1 + 2.2 * int(i/2), -0.2])
+		wheel.setPose(pose)
+		body.addChild(wheel)
+		
+	for i in range(2):
+		chain = VR.Geometry("chain_"+ str(i))
+		
+	
+	
+	parent.addChild(body)
+</core>
+      <arg type="float" value="0" base_name="posX" name_space="initTank" name_suffix="0" persistency="666"/>
+      <arg type="float" value="0" base_name="posY" name_space="initTank" name_suffix="0" persistency="666"/>
+      <arg type="VRPyObjectType" value="0" base_name="parent" name_space="initTank" name_suffix="0" persistency="666"/>
+    </Script>
+    <Script base_name="keyBoardInput" group="Interaction" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+
+	key = dev.getKey()
+	
+	if key == ord('r'):
+		VR.init()
+	elif key == ord(' '):
+		VR.mouseMov = True
+</core>
+      <trig type="on_device" dev="keyboard" state="Pressed" param="" key="-1" base_name="trigger" name_space="__global__" name_suffix="13" persistency="666"/>
     </Script>
   </Scripts>
   <Sockets persistency="666"/>
