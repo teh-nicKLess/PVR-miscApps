@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scene base_name="timer" name_space="Scene" name_suffix="0" persistency="666">
+  <Objects>
+    <Object base_name="Root" name_space="__global__" name_suffix="0" persistency="666" pickable="0" type="Object" visible="1">
+      <Object ambient="0.3 0.3 0.3 1" base_name="light" beacon="Headlight_beacon" diffuse="1 1 1 1" lightType="point" name_space="__global__" name_suffix="0" on="1" persistency="666" photometricMap="" pickable="0" shadow="0" shadowColor="0.1 0.1 0.1 1" shadowMapRes="2048" specular="0.1 0.1 0.1 1" type="Light" visible="1">
+        <Object accept_root="1" aspect="1" at="0 0 0" at_dir="0" base_name="Default" far="512" fov="1.0472" from="-0.171656 0.61335 3.19616" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0 1 0" visible="1">
+          <Object at="0 0 -1" at_dir="0" base_name="Headlight_beacon" from="0 0 0" light="light" name_space="__global__" name_suffix="0" persistency="666" pickable="0" scale="1 1 1" type="LightBeacon" up="0 1 0" visible="1">
+            <constraint persistency="666"/>
+          </Object>
+          <constraint persistency="666"/>
+        </Object>
+      </Object>
+    </Object>
+  </Objects>
+  <Rendering deferred_rendering="0" frustum_culling="1" fxaa="0" hmdd="0" marker="0" occlusion_culling="1" persistency="666" ssao="0" ssao_kernel="4" ssao_noise="4" ssao_radius="0.02" two_sided="1"/>
+  <Scripts persistency="666">
+    <Script base_name="Digit" group="no group" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+	
+	class c_Digit:
+		def __init__(self, name, pos):
+			self.name = name
+			self.transform = VR.Transform(name + "_digit")
+			self.transform.setPosition(pos)
+			self.seg = [0 for x in range(7)]
+			
+			self.seg[0] = VR.Segment(name + "_t", [0,0.9,0], [1,0,0])
+
+			self.seg[1] = VR.Segment(name + "_tl", [-0.45,0.45,0], [0,1,0])
+			
+			self.seg[2] = VR.Segment(name + "_tr", [0.45,0.45,0], [0,1,0])
+			
+			self.seg[3] = VR.Segment(name + "_c", [0,0,0], [1,0,0])
+			
+			self.seg[4] = VR.Segment(name + "_bl", [-0.45,-0.45,0], [0,1,0])
+			
+			self.seg[5] = VR.Segment(name + "_br", [0.45,-0.45,0], [0,1,0])
+			
+			self.seg[6] = VR.Segment(name + "_b", [0,-0.9,0], [1,0,0])
+
+			
+			for s in self.seg:
+				self.transform.addChild(s.geom)
+			
+
+				
+			
+	return c_Digit(name, pos)
+</core>
+      <arg type="str" value="0" base_name="name" name_space="Digit" name_suffix="0" persistency="666"/>
+      <arg type="NoneType" value="None" base_name="pos" name_space="Digit" name_suffix="0" persistency="666"/>
+    </Script>
+    <Script base_name="Segment" group="no group" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+	
+	class c_Segment:
+		def __init__(self, name, pos, up):
+			self.geom = VR.Geometry(name)
+			self.geom.setPrimitive("Box 0.1 0.8 0.1 1 1 1")
+			self.geom.setPosition(pos)
+			self.geom.setUp(up)
+			
+			
+			
+			
+	return c_Segment(name, pos, up)
+</core>
+      <arg type="str" value="0" base_name="name" name_space="Segment" name_suffix="0" persistency="666"/>
+      <arg type="NoneType" value="None" base_name="pos" name_space="Segment" name_suffix="0" persistency="666"/>
+      <arg type="NoneType" value="None" base_name="up" name_space="Segment" name_suffix="0" persistency="666"/>
+    </Script>
+    <Script base_name="init" group="no group" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+
+	if hasattr(VR, 'scene'): VR.scene.destroy()
+	VR.scene = VR.Object('scene', 'light')
+
+	plane = VR.Geometry("Plane")
+	plane.setPrimitive("Plane 6 3 1 1")
+	plane.setColor("grey")
+	#plane.setPose
+	
+	VR.scene.addChild(plane)
+	
+	#seg = VR.Segment("top", [0,0,0], [1,0,0])
+	#plane.addChild(seg.geom)
+	
+	
+	VR.digit = VR.Digit("min", [0,0,0.05])
+	plane.addChild(VR.digit.transform)
+	
+	s = [0 for x in range(10)]
+	s[0] = [1, 1, 1, 0, 1, 1, 1]
+	s[1] = [0, 0, 1, 0, 0, 1, 0]
+	s[2] = [1, 0, 1, 1, 1, 0, 1]
+	s[3] = [1, 0, 1, 1, 0, 1, 1]
+	s[4] = [0, 1, 1, 1, 0, 1, 0]
+	s[5] = [1, 1, 0, 1, 0, 1, 1]
+	s[6] = [1, 1, 0, 1, 1, 1, 1]
+	s[7] = [1, 0, 1, 0, 0, 1, 0]
+	s[8] = [1, 1, 1, 1, 1, 1, 1]
+	s[9] = [1, 1, 1, 1, 0, 1, 1]
+	
+	VR.segControl = s
+	
+	VR.timer = 0
+</core>
+      <trig type="on_scene_load" dev="" state="Pressed" param="" key="0" base_name="trigger" name_space="__global__" name_suffix="0" persistency="666"/>
+    </Script>
+    <Script base_name="update" group="no group" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
+      <core>
+	import VR
+	
+	print "Time: " + str(VR.timer)
+	
+	seg = VR.digit.seg
+	for i in range(len(seg)):
+		if VR.segControl[VR.timer][i]:
+			seg[i].geom.setColor("white")
+		else:
+			seg[i].geom.setColor("grey")
+			
+	
+	VR.timer -= 1
+	if VR.timer &lt; 0:
+		VR.timer = 9
+</core>
+      <trig type="on_timeout" dev="" state="Pressed" param="1000" key="0" base_name="trigger" name_space="__global__" name_suffix="6" persistency="666"/>
+    </Script>
+  </Scripts>
+  <Sockets persistency="666"/>
+  <Background color="0.6 0.6 0.6" format=".jpg" path="./gfx/skybox/sky" persistency="666" type="2"/>
+  <Navigation active="Orbit" persistency="666"/>
+  <Materials persistency="666"/>
+  <Semantics persistency="666"/>
+</Scene>
