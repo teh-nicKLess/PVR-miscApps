@@ -189,14 +189,14 @@
 	if 'tank' in VR.assets: 
 		VR.assets['tank'].destroy()
 		
-	
-	parent = VR.assets["ground"]
+	if parent is None:
+		parent = VR.assets["ground"]
 	
 	body = VR.Geometry("Tank")
 	VR.assets['tank'] = body
 	
 	body.setPrimitive("Box 4 2.5 0.8 1 1 1")
-	body.setPosition([0, 0, 0.6])
+	body.setPosition([posX, posY, 0.6])
 	
 	for i in range(4):
 		wheel = VR.Geometry("wheel_" + str(i))
