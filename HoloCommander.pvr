@@ -3,7 +3,7 @@
   <Objects>
     <Object base_name="Root" name_space="__global__" name_suffix="0" persistency="666" pickable="0" type="Object" visible="1">
       <Object ambient="0.3 0.3 0.3 1" base_name="light" beacon="Headlight_beacon" diffuse="1 1 1 1" lightType="point" name_space="__global__" name_suffix="0" on="1" persistency="666" photometricMap="" pickable="0" shadow="0" shadowColor="0.1 0.1 0.1 1" shadowMapRes="2048" specular="0.1 0.1 0.1 1" type="Light" visible="1">
-        <Object accept_root="1" aspect="1" at="0.212644 0.508234 1" at_dir="0" base_name="Default" far="512" fov="1.0472" from="-4.6116 2.01119 2.00014" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0.055748 0.680535 -0.730592" visible="1">
+        <Object accept_root="1" aspect="1" at="-10.0375 3.80767 1.2255" at_dir="1" base_name="Default" far="512" fov="1.0472" from="-11.0045 4.06237 1.23028" name_space="__global__" name_suffix="0" near="0.1" orthoSize="100" persistency="666" pickable="0" scale="1 1 1" type="Camera" up="0.228354 0.858368 0.459411" visible="1">
           <Object at="0 0 -1" at_dir="0" base_name="Headlight_beacon" from="0 0 0" light="light" name_space="__global__" name_suffix="0" persistency="666" pickable="0" scale="1 1 1" type="LightBeacon" up="0 1 0" visible="1">
             <constraint persistency="666"/>
           </Object>
@@ -126,8 +126,8 @@
 	# multiplier to scale movement with camera height
 	movScaling = 0.1 * camPos[1]
 	
-	changeX = movScaling * (camDir[0] * distY + camDir[1] * distX)
-	changeZ = movScaling * -(camDir[0] * distX + camDir[1] * distY)
+	changeX = movScaling * -(camDir[0] * distY + camDir[1] * distX)
+	changeZ = movScaling * (camDir[0] * distX + camDir[1] * distY)
 	
 	#print "X:", changeX
 	#print "Z:", changeZ
@@ -150,7 +150,7 @@
 	ground = VR.Transform("Ground", "scene")
 	VR.assets["ground"] = ground
 	
-	ground.setPose(VR.Pose([0,0,0],[0,-1,0],[1,0,0]))
+	ground.setPose(VR.Pose([0,0,0],[0,0,1],[0,1,0]))
 	
 	groundMat = VR.Material("Ground Color")
 	groundMat.setSpecular([0.33,0.99,0])
@@ -163,9 +163,9 @@
 		terrain[i] = VR.Geometry("Terrain_" + str(i))
 		terrain[i].setPrimitive("Plane 4 4 1 1 1")
 		terrain[i].setPose(VR.Pose(
-			[-18 + 4 * int(i / 10),-18 + 4*(i%10),0],
-			[0,0,1],
-			[0,1,0]))
+			[-18 + 4 * int(i / 10),0,-18 + 4*(i%10)],
+			[0,-1,0],
+			[0,0,-1]))
 		terrain[i].setMaterial(groundMat)
 		ground.addChild(terrain[i])
 	
@@ -195,26 +195,53 @@
 	body = VR.Geometry("Tank")
 	VR.assets['tank'] = body
 	
-	body.setPrimitive("Box 4 2.5 0.8 1 1 1")
-	body.setPosition([posX, posY, 0.6])
+	body.setPrimitive("Box 4 0.8 2.5 1 1 1")
+	body.setPosition([posX, 0.6, posZ])
+	
+	tower = VR.Geometry("tower")
+	tower.setPrimitive("Cylinder 0.6 1.1 16 1 1 1")
+	tower.setPosition([0, 0.7, 0])
+	#tower.setUp([0,0,1])
+	#tower.setDir([0,1,0])
+	body.addChild(tower)
+	
+	cannon = VR.Geometry("cannon")
+	cannon.setPrimitive("Cylinder 2 0.2 8 1 1 1")
+	cannon.setPosition([2.1,0,0])
+	cannon.setDir([0,1,0])
+	cannon.setUp([1,0,0])
+	tower.addChild(cannon)
+	
+	tankMat = VR.Material("TankColor")
+	tankMat.setDiffuse([0.2, 0.3, 0.05])
+	
+	body.setMaterial(tankMat)
+	tower.setMaterial(tankMat)
+	cannon.setMaterial(tankMat)
 	
 	for i in range(4):
 		wheel = VR.Geometry("wheel_" + str(i))
-		wheel.setPrimitive("Cylinder 0.5 0.4 16 1 1 1")
+		wheel.setPrimitive("Cylinder 0.4 0.4 16 1 1 1")
 		pose = VR.Pose()
-		pose.setPos([(-1)**i * 1.5, -1.1 + 2.2 * int(i/2), -0.2])
-		wheel.setPose(pose)
+		wheel.setPosition([(-1)**i * 1.5, -0.2, -1.2 + 2.4 * int(i/2)])
+		wheel.setUp([0,0,1])
+		wheel.setDir([1,0,0])
+		wheel.setColor("gray")
 		body.addChild(wheel)
 		
 	for i in range(2):
 		chain = VR.Geometry("chain_"+ str(i))
+		chain.setPrimitive("Box 3 0.8 0.4 1 1 1")
+		chain.setPosition([0, -0.2,(-1)**i * 1.2])
+		chain.setColor("gray")
+		body.addChild(chain)
 		
 	
 	
 	parent.addChild(body)
 </core>
       <arg type="float" value="0" base_name="posX" name_space="initTank" name_suffix="0" persistency="666"/>
-      <arg type="float" value="0" base_name="posY" name_space="initTank" name_suffix="0" persistency="666"/>
+      <arg type="float" value="0" base_name="posZ" name_space="initTank" name_suffix="0" persistency="666"/>
       <arg type="VRPyObjectType" value="0" base_name="parent" name_space="initTank" name_suffix="0" persistency="666"/>
     </Script>
     <Script base_name="keyBoardInput" group="Interaction" name_space="__script__" name_suffix="0" persistency="666" server="server1" type="Python">
